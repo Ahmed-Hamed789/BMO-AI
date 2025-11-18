@@ -21,7 +21,7 @@ This app renders the expressive “face” and navigation console for **BMO**, t
 
 1. Copy `.env.local.example` to `.env.local` and set `NEXT_PUBLIC_BMO_API_BASE` to your FastAPI origin (defaults to `http://localhost:8000`).
 2. Make sure the backend is running (e.g., `docker compose up -d --build` from `BMO-Backend`).
-3. Use a Chromium-based browser (Chrome/Edge) so MediaRecorder capture works reliably for Gladia STT uploads.
+3. Use a Chromium-based browser (Chrome/Edge) so the Web Speech API can stream STT locally.
 4. Install dependencies and start Next.js:
 
 ```bash
@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000). Tap the Wake button or hold the mic to walk through the MediaRecorder → Gladia STT → OpenRouter → OpenAI TTS pipeline powered by the backend. Use the STOP button or the debug panel (bottom-right bug icon) to return to idle.
+Then open [http://localhost:3000](http://localhost:3000). Tap the Wake button or hold the mic in Chrome to walk through the live Chrome Web Speech → OpenRouter → TTS sequence powered by the backend. Use the STOP button or the debug panel (bottom-right bug icon) to return to idle.
 
 ## 🧪 Production Build
 

@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     openrouter_temperature: float = 0.2
 
     openai_api_key: str
-    gladia_api_key: Optional[str] = None
     tts_model: str = "gpt-4o-mini-tts"
     tts_voice: str = "alloy"
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import conversation, transcription
+from app.api.routes import conversation
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -23,7 +23,6 @@ app.add_middleware(
 )
 
 app.include_router(conversation.router)
-app.include_router(transcription.router)
 
 
 @app.get("/health", tags=["health"])
