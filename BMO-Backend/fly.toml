@@ -1,4 +1,3 @@
-app = "system32-bitter-thunder-8941"
 primary_region = "ams"
 kill_signal = "SIGINT"
 kill_timeout = 5
