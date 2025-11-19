@@ -584,23 +584,73 @@ export default function Home() {
               onStop={handleStop}
             />
           ) : (
-            <div className="glass-card flex h-full flex-col items-start justify-between gap-6 rounded-[32px] p-8 text-slate-200">
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Flow</p>
-                <h2 className="text-4xl font-semibold text-white">Voice + Map Fusion</h2>
-                <p className="mt-3 max-w-md text-slate-300">
-                  Wake BMO, hold the mic in Chrome, or trigger a quick command to see the Chrome Web Speech →
-                  OpenRouter → Edge TTS pipeline animate across the interface.
-                </p>
+            <div className="flex h-full flex-col gap-6">
+              <div className="glass-card rounded-[32px] p-8 text-slate-200">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-slate-400">
+                  <span>BMO Status Console</span>
+                  <span className="flex items-center gap-2 text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-300" /> Live
+                  </span>
+                </div>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Mode</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{mode}</p>
+                    <p className="text-xs text-slate-500">Realtime robot state</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Emotion</p>
+                    <p className="mt-2 text-2xl font-semibold capitalize text-white">{emotion}</p>
+                    <p className="text-xs text-slate-500">Glow + expression palette</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Session</p>
+                    <p className="mt-2 text-xl font-semibold text-white">{sessionId ?? "—"}</p>
+                    <p className="text-xs text-slate-500">Refresh to rotate IDs</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Connectivity</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{isOnline ? "Online" : "Offline"}</p>
+                    <p className="text-xs text-slate-500">Web Speech + FastAPI link</p>
+                  </div>
+                </div>
+                <div className="mt-6 rounded-2xl border border-white/5 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Pipeline</p>
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold tracking-[0.3em] text-slate-200">
+                    {["Idle", "Listening", "Processing", "Speaking", "Navigating"].map((step) => (
+                      <span
+                        key={step}
+                        className={`rounded-full px-4 py-2 ${
+                          mode === step.toUpperCase()
+                            ? "bg-emerald-300/20 text-white"
+                            : "bg-white/5 text-slate-400"
+                        }`}
+                      >
+                        {step}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3 text-sm text-slate-400">
-                <span className="rounded-2xl border border-white/10 px-4 py-2">
-                  Idle ➜ Listening ➜ Thinking ➜ Speaking ➜ Navigation
-                </span>
-                <span className="rounded-2xl border border-white/10 px-4 py-2">Swagger docs at /docs</span>
-                <span className="rounded-2xl border border-white/10 px-4 py-2">
-                  Stack: Chrome Web Speech STT + FastAPI + OpenRouter + Edge TTS
-                </span>
+
+              <div className="glass-card rounded-[32px] p-8 text-slate-200">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-slate-400">
+                  <span>Interaction Deck</span>
+                  <span className="text-slate-500">Touch-first</span>
+                </div>
+                <ul className="mt-6 space-y-4 text-sm text-slate-300">
+                  {[
+                    "Tap Wake for an instant greeting. BMO syncs persona + map context before replying.",
+                    "Hold the mic or trigger a Quick Command to drive the STT → FastAPI → OpenRouter flow.",
+                    "Watch the left map card for campus context; it mirrors the backend `aiu_map.md` file.",
+                    "Hit STOP anytime to pause speech, reset directions, and drop back to idle glow.",
+                  ].map((tip) => (
+                    <li key={tip} className="flex items-start gap-3">
+                      <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-teal-300" />
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}
