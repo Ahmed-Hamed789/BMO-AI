@@ -1,4 +1,5 @@
-const API_BASE = process.env.NEXT_PUBLIC_BMO_API_BASE ?? "http://localhost:8000";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_BMO_API_BASE ?? "http://localhost:8000";
+const API_BASE = RAW_API_BASE.replace(/\/$/, "");
 const CONVERSATION_BASE = `${API_BASE}/api/v1/conversation`;
 
 async function handleResponse<T>(res: Response): Promise<T> {
