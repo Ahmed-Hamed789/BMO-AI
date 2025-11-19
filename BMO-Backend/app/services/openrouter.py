@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -15,9 +15,9 @@ class OpenRouterClient:
         self.settings = settings
         self._client = httpx.AsyncClient(timeout=60)
 
-    async def chat(self, messages: List[Dict[str, str]]) -> str:
+    async def chat(self, messages: List[Dict[str, str]], model: Optional[str] = None) -> str:
         payload = {
-            "model": self.settings.openrouter_model,
+            "model": model or self.settings.openrouter_model,
             "temperature": self.settings.openrouter_temperature,
             "messages": messages,
             "response_format": {"type": "json_object"},

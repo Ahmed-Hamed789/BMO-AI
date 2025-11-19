@@ -3,7 +3,7 @@
 This FastAPI service powers BMO's voice-driven tour guide workflow. It exposes:
 
 - `/api/v1/conversation/wake` – start a session and get a greeting
-- `/api/v1/conversation/listen` – upload recorded audio to run Speech-to-Text (OpenAI Whisper)
+- `/api/v1/conversation/listen` – legacy endpoint kept for compatibility (returns 410)
 - `/api/v1/conversation/respond` – send a transcript, get OpenRouter narration, navigation cues, and synthesized speech
 
 The automatic Swagger UI lives at `http://localhost:8000/docs`.
@@ -16,14 +16,14 @@ The automatic Swagger UI lives at `http://localhost:8000/docs`.
 ```dotenv
 OPENROUTER_API_KEY=...
 OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
-OPENAI_API_KEY=...
-TTS_MODEL=gpt-4o-mini-tts
-TTS_VOICE=alloy
+EDGE_TTS_VOICE=en-US-JennyNeural
+EDGE_TTS_RATE=+0%
+EDGE_TTS_VOLUME=+0%
 APP_URL=http://localhost:3000
 CORS_ORIGINS=["http://localhost:3000","https://localhost:3000"]
 ```
 
-> Speech-to-text now happens directly in the browser via the Chrome Web Speech API. The backend no longer consumes audio uploads or OpenAI STT credits—only TTS synthesis requires `OPENAI_API_KEY`. If you develop over HTTPS (e.g., `https://localhost:3000`), keep both HTTP and HTTPS origins in `CORS_ORIGINS` so the browser can reach FastAPI.
+> Speech-to-text now happens directly in the browser via the Chrome Web Speech API, so the backend no longer consumes audio uploads. Speech synthesis uses Microsoft Edge TTS and the defaults above; no additional API key is required. If you develop over HTTPS (e.g., `https://localhost:3000`), keep both HTTP and HTTPS origins in `CORS_ORIGINS` so the browser can reach FastAPI.
 
 The backend now targets OpenRouter's `google/gemini-2.0-flash-exp:free` model by default. Update `OPENROUTER_MODEL` and `OPENROUTER_API_KEY` in `.env` if you need to switch models or rotate credentials.
 
