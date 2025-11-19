@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Compass, GraduationCap, MapPinned, Mic, PauseCircle, Utensils } from "lucide-react";
+import { Building2, Cpu, Stethoscope, Wrench, Mic, PauseCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import BmoFace from "@/components/bmo-face";
@@ -15,64 +15,63 @@ import { RobotMode } from "@/lib/robot";
 
 const commandPresets = {
   highlights: {
-    label: "Campus Highlights",
-    description: "Studio + AI showcase tour",
-    icon: Compass,
-    prompt:
-      "Guide the visitor through the engineering studios, AI courtyard, and innovation wall with energetic narration.",
-    destination: "Engineering Studios",
+    label: "Building 8 • Administration",
+    description: "Admissions + leadership hub",
+  icon: Building2,
+    prompt: "Guide the visitor from the Central Library entrance to Building 8 (Administration).",
+    destination: "Building 8 Administration",
     narration:
-      "Hi! I’m BMO. Let me walk you through the creative studios, then we’ll cut through the courtyard to reach the Applied AI wing.",
+      "We're heading to Building 8 for the administration team. Keep your steps steady, stay on the west path, and stop at the glass lobby.",
     directions: [
-      "Face the Central Library (Building 3) and head west toward the Yellow Zone",
-      "Follow the promenade beside Building 8 until you see the Innovation Wall",
-      "Turn right toward Building 10’s studio atrium",
-      "Cut through the courtyard to reach the Applied AI wing",
+      "Stand at Building 3's main doors and face west toward the Yellow Zone walkway.",
+      "Walk straight along the shaded path until you pass the reflective pool.",
+      "Keep left when you see the wall marked Administration.",
+      "Building 8's lobby is directly ahead on the left.",
     ],
   },
   dean: {
-    label: "Find Dean’s Office",
-    description: "Navigate guests to the executive suite",
-    icon: GraduationCap,
-    prompt: "Lead the visitor from the main lobby to the Dean’s Office on Level 2 near the executive suite.",
-    destination: "Dean’s Office",
+    label: "Building 10 • Computer Science",
+    description: "Labs + AI ops center",
+  icon: Cpu,
+    prompt: "Take the visitor from the library plaza to Building 10 (Computer Science).",
+    destination: "Building 10 CS Atrium",
     narration:
-      "Routing you to the Dean’s office near Building 1. We’ll skim the digital atrium, then hop up one level to the executive suite.",
+      "Heading to Building 10 for Computer Science. Walk north from the library, keep right when the path splits, and enter the first glass doors.",
     directions: [
-      "From the Library, face north toward the Red Zone",
-      "Walk the administration spine until Building 1’s atrium",
-      "Take the stairs or lift to Level 2",
-      "Dean’s office sits on the right wing overlooking the courtyard",
+      "Leave Building 3 and walk straight north until the path reaches Buildings 9 and 10.",
+      "Turn slightly right to stay on the side that leads to Building 10.",
+      "Follow the CS + AI signs on the right wall.",
+      "Enter the first glass doors; you are in Building 10.",
     ],
   },
   wc: {
-    label: "Restrooms",
-    description: "Fast route to nearest facilities",
-    icon: MapPinned,
-    prompt: "Direct the visitor to the closest accessible restrooms in the north wing.",
-    destination: "North Wing Facilities",
+    label: "Building 11 • Dentistry",
+    description: "Clinics + simulation labs",
+  icon: Stethoscope,
+    prompt: "Guide the visitor from the library to Building 11 (Dentistry clinics).",
+    destination: "Building 11 Dentistry Clinics",
     narration:
-      "Restrooms ahead. I’ll take you through the calmer north corridor hugging Buildings 4 and 5.",
+      "We're on our way to Building 11 for the Dentistry clinics. Follow the medical corridor, take the first right, and the frosted glass doors will be on your left.",
     directions: [
-      "From the Library, angle northeast toward the Red/Medical strip",
-      "Stay beside Building 4 until you pass the indoor garden",
-      "Turn right at the first signage cluster",
-      "Accessible facilities are 5 meters ahead on your right",
+      "From the library entrance, face northeast toward the Red Zone corridor.",
+      "Walk along the covered path beside Buildings 4 and 5.",
+      "Turn right at the first pillar labeled Health Sciences.",
+      "Building 11 is two segments ahead on the left with frosted glass doors.",
     ],
   },
   cafe: {
-    label: "Guide to Cafeteria",
-    description: "Ideal for lunch rush",
-    icon: Utensils,
-    prompt: "Walk the guest from the innovation hub down to the terrace café with scenic commentary.",
-    destination: "Cafeteria Terrace",
+    label: "Building 9 • Engineering",
+    description: "Fabrication + robotics bay",
+  icon: Wrench,
+    prompt: "Lead the visitor from the Library plaza to Building 9 (Engineering).",
+    destination: "Building 9 Engineering Hall",
     narration:
-      "Delivering you to the terrace café overlooking the Blue Zone. Their cardamom latte just won campus bragging rights.",
+      "Heading to Building 9 for engineering labs. We'll stay on the northwest walkway, take the short ramp up, and enter through the wide bay doors.",
     directions: [
-      "Head east from the Library toward Buildings 13 and 14",
-      "Take the gentle ramp beside the media lab balcony",
-      "Cross the kinetic bridge toward the terrace plaza",
-      "Café entrance appears on the left with Blue Zone views",
+      "Start from the library plaza and walk northwest toward Building 9.",
+      "Follow the straight walkway beside the maker kiosks.",
+      "Take the small ramp on the left when Building 9 appears.",
+      "Enter the wide doors labeled Engineering Hall.",
     ],
   },
 } as const;

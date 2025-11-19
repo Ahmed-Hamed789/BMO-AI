@@ -261,19 +261,6 @@ export const BmoFace = ({ mode, caption, compact, onWake, emotion = "neutral" }:
       className={`glass-card neon-outline relative overflow-hidden ${compact ? "p-3" : "p-10"}`}
       style={{ minHeight: compact ? 140 : 320, boxShadow: expression.glow }}
     >
-      {!compact && (
-        <div className="mb-4 flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-300/70">
-          <span>AIU • Autonomous Guide</span>
-          <span>{mode}</span>
-        </div>
-      )}
-
-      {!compact && (
-        <div className="absolute right-6 top-6 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-100/80">
-          Mood: {expression.label}
-        </div>
-      )}
-
       <AnimatePresence mode="wait">{faceContent()}</AnimatePresence>
 
       {!compact && mode === "IDLE" && (
