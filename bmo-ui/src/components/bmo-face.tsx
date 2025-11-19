@@ -5,17 +5,33 @@ import { Mic, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import AudioVisualizer from "./audio-visualizer";
 import { RobotMode } from "@/lib/robot";
+import type { Emotion } from "@/lib/api";
 
 interface BmoFaceProps {
   mode: RobotMode;
   caption: string;
   compact?: boolean;
   onWake: () => void;
+  emotion?: Emotion;
 }
 
 const gazeRange = 4;
 
-export const BmoFace = ({ mode, caption, compact, onWake }: BmoFaceProps) => {
+const emotionGlows: Record<Emotion, string> = {
+  happy: "0 0 60px rgba(74,222,128,0.45)",
+  thinking: "0 0 50px rgba(125,211,252,0.4)",
+  neutral: "0 0 45px rgba(94,234,212,0.35)",
+  witty: "0 0 60px rgba(248,250,252,0.35)",
+};
+
+const emotionCopy: Record<Emotion, string> = {
+  happy: "Upbeat",
+  thinking: "Contemplative",
+  neutral: "Calm",
+  witty: "Witty",
+};
+
+export const BmoFace = ({ mode, caption, compact, onWake, emotion = "neutral" }: BmoFaceProps) => {
   const [isBlinking, setIsBlinking] = useState(false);
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
   const blinkTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -145,12 +161,19 @@ export const BmoFace = ({ mode, caption, compact, onWake }: BmoFaceProps) => {
       }`}
       style={{
         minHeight: compact ? 140 : 320,
+        boxShadow: emotionGlows[emotion],
       }}
     >
       {!compact && (
         <div className="mb-4 flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-300/70">
           <span>AIU • Autonomous Guide</span>
           <span>{mode}</span>
+        </div>
+      )}
+
+      {!compact && (
+        <div className="absolute right-6 top-6 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-100/80">
+          Mood: {emotionCopy[emotion]}
         </div>
       )}
 

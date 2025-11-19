@@ -14,6 +14,14 @@ export type WakeResponse = {
   message: string;
 };
 
+export type Emotion = "happy" | "thinking" | "neutral" | "witty";
+
+export type NavigationDisplay = {
+  target_building: string;
+  zone_color: "Yellow" | "Red" | "Blue" | string;
+  direction_guide: string;
+};
+
 export type RespondPayload = {
   session_id: string;
   transcript: string;
@@ -21,6 +29,9 @@ export type RespondPayload = {
   destination: string;
   directions: string[];
   mode: string;
+  thought?: string;
+  emotion?: Emotion;
+  navigation_display?: NavigationDisplay;
   speech?: {
     mime_type: string;
     base64: string;

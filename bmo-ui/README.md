@@ -4,9 +4,10 @@ This app renders the expressive “face” and navigation console for **BMO**, t
 
 ## ✨ Experience Highlights
 
-- **Animated Face**: Dual eyes blink and look around, then morph into an audio waveform while listening/speaking.
+- **Animated Face**: Dual eyes blink and look around, then morph into an audio waveform while listening/speaking, with mood glows driven by the LLM.
 - **State Machine**: `IDLE → LISTENING → PROCESSING → SPEAKING → NAVIGATING` simulated with timed delays to mimic STT, LLM reasoning, and TTS streaming.
 - **Navigation Canvas**: Face shrinks into a status glyph while the rest of the screen becomes a map with large direction cards and an emergency STOP button.
+- **Map Context Preview**: Idle mode now surfaces the AIU campus zones (Yellow/Red/Blue) plus a campus aerial PNG (`public/bmo-campus-map.png`) so the UI matches whatever the backend persona sees.
 - **Quick Commands**: Card-based actions for the Dean’s Office, Cafeteria, Facilities, and a Highlights tour, all sized for touch interactions (≥60 px height).
 - **Debug Panel**: Hidden bug icon toggles manual state controls for demos.
 
@@ -16,6 +17,7 @@ This app renders the expressive “face” and navigation console for **BMO**, t
 - [Tailwind CSS](https://tailwindcss.com/) for rapid styling (plus a few custom glassmorphism helpers)
 - [Framer Motion](https://www.framer.com/motion/) for morphing/layout animations
 - [Lucide React](https://lucide.dev/) for iconography
+- **Voice chain**: Chrome Web Speech STT → FastAPI → OpenRouter → Edge TTS
 
 ## 🚀 Run Locally
 
@@ -29,7 +31,7 @@ npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000). Tap the Wake button or hold the mic in Chrome to walk through the live Chrome Web Speech → OpenRouter → TTS sequence powered by the backend. Use the STOP button or the debug panel (bottom-right bug icon) to return to idle.
+Then open [http://localhost:3000](http://localhost:3000). Tap the Wake button or hold the mic in Chrome to walk through the live Chrome Web Speech → OpenRouter → Edge TTS sequence powered by the backend. Use the STOP button or the debug panel (bottom-right bug icon) to return to idle.
 
 ## 🧪 Production Build
 
@@ -39,3 +41,8 @@ npm run start
 ```
 
 Deploy the `.next/` output to your hosting target (Vercel, Azure Static Web Apps, etc.).
+
+## 🗺️ Map Asset
+
+- Drop the latest aerial PNG at `public/bmo-campus-map.png`. The idle map card loads this file directly with Next.js `Image`, so refreshing the file automatically updates the UI—no code changes needed.
+- Keep the filename consistent with the backend docs (`bmo-campus-map.png`) so both front and back reference the same canonical asset.

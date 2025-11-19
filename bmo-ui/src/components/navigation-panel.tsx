@@ -3,12 +3,14 @@
 import { motion } from "framer-motion";
 import { CircleAlert, MapPin, StopCircle } from "lucide-react";
 import { RobotMode } from "@/lib/robot";
+import type { NavigationDisplay } from "@/lib/api";
 
 interface NavigationPanelProps {
   mode: RobotMode;
   instructions: string[];
   destination: string;
   onStop: () => void;
+  navigationMeta?: NavigationDisplay | null;
 }
 
 export const NavigationPanel = ({
@@ -16,8 +18,18 @@ export const NavigationPanel = ({
   instructions,
   destination,
   onStop,
+  navigationMeta,
 }: NavigationPanelProps) => {
   if (mode !== "NAVIGATING") return null;
+
+  const zoneAccent: Record<string, string> = {
+    Yellow: "from-amber-400/20 via-amber-900/20 to-amber-900/60 text-amber-100",
+    Red: "from-rose-400/20 via-rose-900/20 to-rose-900/60 text-rose-100",
+    Blue: "from-sky-400/20 via-sky-900/20 to-sky-900/60 text-sky-100",
+  };
+
+  const zoneLabel = navigationMeta?.zone_color ?? "Yellow";
+  const badgeClass = zoneAccent[zoneLabel] ?? "from-emerald-400/20 via-emerald-900/20 to-emerald-900/60 text-emerald-100";
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-[32px] bg-gradient-to-br from-[#0c1627] to-[#050a12] p-6 text-slate-100">
@@ -31,6 +43,21 @@ export const NavigationPanel = ({
           Active
         </div>
       </div>
+
+      {navigationMeta && (
+        <div className="glass-card grid gap-4 rounded-3xl border border-white/5 p-4 text-sm text-slate-200">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Zone</p>
+              <p className="text-xl font-semibold text-white">{zoneLabel} Zone</p>
+            </div>
+            <span className={`rounded-full bg-gradient-to-r ${badgeClass} px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em]`}>
+              Library Anchor
+            </span>
+          </div>
+          <p className="text-base text-slate-100">{navigationMeta.direction_guide}</p>
+        </div>
+      )}
 
       <div className="relative mt-4 flex-1 overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-slate-900/80 via-slate-900/10 to-black/80">
         <motion.div
@@ -54,7 +81,7 @@ export const NavigationPanel = ({
       <div className="grid gap-3 md:grid-cols-2">
         {instructions.map((step, index) => (
           <motion.div
-            key={step}
+            key={`${index}-${step}`}
             className="glass-card flex items-center gap-4 rounded-2xl border border-white/5 px-4 py-3"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
