@@ -16,12 +16,17 @@ class Settings(BaseSettings):
 
     openrouter_api_key: str
     openrouter_model: str = "google/gemini-2.0-flash-exp:free"
+    openrouter_models: List[str] = [
+        "google/gemini-2.0-flash-exp:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "qwen/qwen-2.5-72b-instruct:free",
+        "mistralai/mistral-nemo:free",
+    ]
     openrouter_temperature: float = 0.2
 
-    openai_api_key: str
-    gladia_api_key: Optional[str] = None
-    tts_model: str = "gpt-4o-mini-tts"
-    tts_voice: str = "alloy"
+    edge_tts_voice: str = "en-US-JennyNeural"
+    edge_tts_rate: str = "+0%"
+    edge_tts_volume: str = "+0%"
 
     default_greeting: str = "Hello! I’m BMO, your tour companion."
 

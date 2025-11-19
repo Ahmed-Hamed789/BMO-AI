@@ -8,7 +8,7 @@ import BmoFace from "@/components/bmo-face";
 import CommandGrid from "@/components/command-grid";
 import DebugPanel from "@/components/debug-panel";
 import NavigationPanel from "@/components/navigation-panel";
-import { sendTranscript, transcribeAudio, wakeSession } from "@/lib/api";
+import { sendTranscript, wakeSession } from "@/lib/api";
 import { RobotMode } from "@/lib/robot";
 
 const commandPresets = {
@@ -85,12 +85,9 @@ const modeAccent: Record<RobotMode, string> = {
   ERROR: "text-rose-300",
 };
 
-const pickMimeType = (): string | undefined => {
-  if (typeof window === "undefined" || typeof window.MediaRecorder === "undefined") {
-    return undefined;
-  }
-  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-  return candidates.find((type) => window.MediaRecorder.isTypeSupported(type));
+const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null => {
+  if (typeof window === "undefined") return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 };
 
 export default function Home() {
@@ -105,31 +102,21 @@ export default function Home() {
   const [lastTranscript, setLastTranscript] = useState("");
   const [clientReady, markClientReady] = useReducer(() => true, false);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const discardRecordingRef = useRef(false);
-  const lastMimeTypeRef = useRef("audio/webm");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    markClientReady();
+  markClientReady();
     return () => {
-      discardRecordingRef.current = true;
-      const recorder = recorderRef.current;
-      if (recorder && recorder.state !== "inactive") {
+      if (recognitionRef.current) {
         try {
-          recorder.stop();
+          recognitionRef.current.abort();
         } catch {
-          // ignored
+          recognitionRef.current.stop();
         }
-      }
-      recorderRef.current = null;
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
+        recognitionRef.current = null;
       }
       if (audioRef.current) {
         audioRef.current.pause();
@@ -234,145 +221,124 @@ export default function Home() {
     [applyNavigation]
   );
 
-  const finalizeRecording = useCallback(async () => {
-    const shouldDiscard = discardRecordingRef.current;
-    discardRecordingRef.current = false;
+  const stopRecognition = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        recognitionRef.current.abort();
+      }
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setInterimTranscript("");
+  }, []);
 
-    const chunks = audioChunksRef.current;
-    audioChunksRef.current = [];
-
-    if (shouldDiscard) {
-      setInterimTranscript("");
+  const startRecognition = useCallback(() => {
+    const RecognitionCtor = getSpeechRecognitionConstructor();
+    if (!RecognitionCtor) {
+      setError("Speech recognition is only supported in Chrome-based browsers.");
+      setMode("ERROR");
       return;
     }
 
-    if (!chunks.length) {
-      setError("No audio captured. Try holding the mic a little longer.");
-      setMode("ERROR");
-      setInterimTranscript("");
-      return;
-    }
-
-    const blob = new Blob(chunks, { type: lastMimeTypeRef.current });
-    if (blob.size < 1024) {
-      setError("Captured audio was too short. Please try again.");
-      setMode("ERROR");
-      setInterimTranscript("");
-      return;
-    }
-
-    setInterimTranscript("Transcribing…");
-    setMode("PROCESSING");
-    setError(null);
-
-    try {
-      const { transcript } = await transcribeAudio(blob);
-      const clean = (transcript ?? "").trim();
-      if (!clean) {
-        throw new Error("Gladia returned an empty transcript.");
-      }
-      setLastTranscript(clean);
-      setInterimTranscript("");
-      const id = await ensureSession();
-      await processTranscript(id, clean);
-    } catch (err) {
-      setInterimTranscript("");
-      setError(err instanceof Error ? err.message : "Failed to transcribe audio.");
-      setMode("ERROR");
-    }
-  }, [ensureSession, processTranscript]);
-
-  const stopRecording = useCallback(
-    (options?: { discard?: boolean }) => {
-      if (options?.discard) {
-        discardRecordingRef.current = true;
-      }
-
-      if (recorderRef.current && recorderRef.current.state !== "inactive") {
-        try {
-          recorderRef.current.stop();
-        } catch {
-          // ignored
-        }
-      } else if (options?.discard) {
-        discardRecordingRef.current = false;
-      }
-
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-      }
-
-      setIsRecording(false);
-    },
-    []
-  );
-
-  const startRecording = useCallback(async () => {
     if (typeof window !== "undefined" && !window.isSecureContext) {
-      setError("Chrome requires HTTPS (or localhost) to access the microphone.");
+      setError("Chrome requires HTTPS (or localhost) to start speech recognition.");
       setMode("ERROR");
       return;
     }
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setError("You're offline. Reconnect to the internet to use speech capture.");
+      setError("You're offline. Reconnect to the internet to use speech recognition.");
       setMode("ERROR");
       return;
     }
 
-    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      setError("Your browser doesn't support MediaRecorder-based capture.");
+    const sessionPromise = ensureSession();
+    const recognition = new RecognitionCtor();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    const handleSessionFailure = (err: unknown) => {
+      setError(err instanceof Error ? err.message : "Could not reach backend session");
       setMode("ERROR");
-      return;
-    }
+      stopRecognition();
+    };
+
+    sessionPromise.catch(handleSessionFailure);
+
+    recognition.onresult = async (event) => {
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const alternative = result[0] ?? result.item(0);
+        if (!alternative) continue;
+        const transcript = alternative.transcript;
+        if (result.isFinal) {
+          finalTranscript += transcript;
+        } else {
+          setInterimTranscript(transcript);
+        }
+      }
+
+      if (finalTranscript.trim()) {
+        const clean = finalTranscript.trim();
+        setInterimTranscript("");
+        setLastTranscript(clean);
+        setIsRecording(false);
+        recognition.stop();
+        try {
+          const id = await sessionPromise;
+          await processTranscript(id, clean);
+        } catch (err) {
+          handleSessionFailure(err);
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      let detail: string;
+      switch (event.error) {
+        case "not-allowed":
+          detail = "Microphone permission denied";
+          break;
+        case "network":
+          detail = "Chrome Web Speech hit a network error. Ensure you're online and using HTTPS/localhost.";
+          break;
+        default:
+          detail = event.error ? `Speech recognition error: ${event.error}` : "Speech recognition failed";
+      }
+      setError(detail);
+      setMode("ERROR");
+      stopRecognition();
+    };
+
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      setIsRecording(false);
+      setInterimTranscript("");
+    };
+
+    setError(null);
+    setMode("LISTENING");
+    setIsRecording(true);
+    recognitionRef.current = recognition;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-
-      const mimeType = pickMimeType();
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      recorderRef.current = recorder;
-      lastMimeTypeRef.current = recorder.mimeType || mimeType || "audio/webm";
-      audioChunksRef.current = [];
-      discardRecordingRef.current = false;
-
-      recorder.ondataavailable = (event: BlobEvent) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-  recorder.onerror = (event: Event & { error?: DOMException }) => {
-        setError(event.error?.message ?? "Microphone recorder error.");
-        setMode("ERROR");
-        discardRecordingRef.current = true;
-      };
-
-      recorder.onstop = () => {
-        recorderRef.current = null;
-        setIsRecording(false);
-        void finalizeRecording();
-      };
-
-      setError(null);
-      setMode("LISTENING");
-      setIsRecording(true);
-      setInterimTranscript("Listening…");
-      recorder.start();
+      recognition.start();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not access microphone");
-      setMode("ERROR");
+      handleSessionFailure(err);
     }
-  }, [finalizeRecording]);
+  }, [ensureSession, processTranscript, stopRecognition]);
 
   const handleMicToggle = () => {
     if (isRecording) {
-      stopRecording();
+      stopRecognition();
       return;
     }
-    void startRecording();
+    startRecognition();
   };
 
   const handleQuickCommand = useCallback(
@@ -395,7 +361,7 @@ export default function Home() {
   }, [createSession]);
 
   const handleStop = useCallback(() => {
-    stopRecording({ discard: true });
+    stopRecognition();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -404,8 +370,7 @@ export default function Home() {
     setCaption("Standing by for the next request.");
     setInstructions([]);
     setError(null);
-    setInterimTranscript("");
-  }, [stopRecording]);
+  }, [stopRecognition]);
 
   const quickCommands = useMemo(
     () =>
@@ -420,20 +385,13 @@ export default function Home() {
     [handleQuickCommand]
   );
 
-  const mediaCaptureSupported =
-    clientReady &&
-    typeof window !== "undefined" &&
-    typeof window.MediaRecorder !== "undefined" &&
-    typeof navigator !== "undefined" &&
-    Boolean(navigator.mediaDevices?.getUserMedia);
-
-  const secureContext = clientReady && typeof window !== "undefined" ? window.isSecureContext : true;
-
+  const speechSupported = clientReady && Boolean(getSpeechRecognitionConstructor());
+  const secureContext = clientReady ? window.isSecureContext : true;
   const micDisabled =
-    !clientReady || mode === "PROCESSING" || !mediaCaptureSupported || !secureContext || !isOnline;
+    !clientReady || mode === "PROCESSING" || !speechSupported || !secureContext || !isOnline;
 
   const handleModeOverride = (nextMode: RobotMode) => {
-    stopRecording({ discard: true });
+    stopRecognition();
     if (nextMode === "NAVIGATING" && instructions.length === 0) {
       setInstructions([...commandPresets.highlights.directions]);
       setDestination(commandPresets.highlights.destination);
@@ -485,14 +443,14 @@ export default function Home() {
             >
               {isRecording ? <PauseCircle className="text-rose-200" /> : <Mic className="text-teal-200" />}
               {isRecording
-                ? "Tap to stop recording"
+                ? "Tap to stop listening"
                 : micDisabled
-                ? "Microphone capture unavailable"
-                : "Hold to speak with BMO"}
+                ? "Speech recognition unavailable"
+                : "Tap to speak with BMO"}
             </button>
-            {clientReady && !mediaCaptureSupported && (
+            {clientReady && !speechSupported && (
               <p className="text-xs text-amber-200">
-                Use a Chromium-based browser that supports the MediaRecorder API to capture audio from the mic.
+                Use the desktop version of Chrome/Edge to enable the Web Speech API.
               </p>
             )}
             {!isOnline && (
@@ -500,7 +458,7 @@ export default function Home() {
             )}
             {clientReady && !secureContext && (
               <p className="text-xs text-amber-200">
-                Microphone access requires HTTPS or localhost in modern browsers.
+                Speech recognition requires HTTPS or localhost in Chrome.
               </p>
             )}
           </div>
@@ -522,7 +480,7 @@ export default function Home() {
                 <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Flow</p>
                 <h2 className="text-4xl font-semibold text-white">Voice + Map Fusion</h2>
                 <p className="mt-3 max-w-md text-slate-300">
-                  Wake BMO, hold the mic, or trigger a quick command to see the MediaRecorder → Gladia STT →
+                  Wake BMO, hold the mic in Chrome, or trigger a quick command to see the Chrome Web Speech →
                   OpenRouter → TTS pipeline animate across the interface.
                 </p>
               </div>
@@ -532,7 +490,7 @@ export default function Home() {
                 </span>
                 <span className="rounded-2xl border border-white/10 px-4 py-2">Swagger docs at /docs</span>
                 <span className="rounded-2xl border border-white/10 px-4 py-2">
-                  Stack: MediaRecorder + Gladia STT + FastAPI + OpenRouter + OpenAI TTS
+                  Stack: Chrome Web Speech STT + FastAPI + OpenRouter + OpenAI TTS
                 </span>
               </div>
             </div>
