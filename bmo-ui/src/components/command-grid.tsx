@@ -16,19 +16,19 @@ interface CommandGridProps {
 
 export const CommandGrid = ({ commands }: CommandGridProps) => {
   return (
-    <div className="grid w-full gap-4 md:grid-cols-2">
+    <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2">
       {commands.map((command, idx) => (
         <motion.button
           key={command.label}
           onClick={command.onSelect}
           whileTap={{ scale: 0.98 }}
-          className="glass-card group flex h-32 flex-col items-start gap-3 rounded-3xl border border-white/10 p-5 text-left transition hover:border-teal-200/40"
+          className="glass-card group flex min-h-[180px] w-full flex-col items-start justify-between gap-4 rounded-3xl border border-white/10 p-5 text-left transition hover:border-teal-200/40"
         >
           <div className="flex items-center gap-3 text-lg font-semibold text-white">
-            <command.icon className="text-teal-200 transition group-hover:scale-110" />
+            <command.icon className="text-teal-200 transition group-hover:scale-110" size={22} />
             {command.label}
           </div>
-          <p className="text-sm text-slate-300/90">{command.description}</p>
+          <p className="text-sm text-slate-300/90 text-balance leading-relaxed">{command.description}</p>
           <motion.span
             className="text-xs uppercase tracking-[0.4em] text-teal-200/60"
             animate={{ opacity: [0.4, 1, 0.4] }}

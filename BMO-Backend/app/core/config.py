@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     edge_tts_rate: str = "+0%"
     edge_tts_volume: str = "+0%"
 
-    default_greeting: str = "Hello! I’m BMO, your tour companion."
+    default_greeting: str = (
+        "Hey there! I’m BMO, broadcasting from the Central Library. Ask me about any building or shortcut."
+    )
 
 
 @lru_cache()
